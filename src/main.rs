@@ -9,30 +9,28 @@ struct File {
     path : String,
 }
 
-fn collect_files(dirs: &[String], v: &mut Vec<File>, d: &mut Vec<String>) {
-    for dir in dirs {
-        if let Ok(entries) = fs::read_dir(&dir) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if let Some(path_str) = path.to_str() {
-                        if path.is_file() {
-                            if let Ok(metadata) = entry.metadata() {
-                                v.push(File{ inode : metadata.ino(),
-                                             size  : metadata.len(),
-                                             path  : String::from(path_str),
-                                        })
-                            }
-                        } else if path.is_dir() {
-                            d.push(String::from(path_str));
+fn collect_files(dir: &String, v: &mut Vec<File>) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if let Some(path_str) = path.to_str() {
+                    if path.is_file() {
+                        if let Ok(metadata) = entry.metadata() {
+                            v.push(File{ inode : metadata.ino(),
+                                         size  : metadata.len(),
+                                         path  : String::from(path_str),
+                                    })
                         }
+                    } else if path.is_dir() {
+                        collect_files(&(String::from(path_str)), v);
                     }
                 }
             }
         }
-        else {
-            println!("{}: invalid directory", dir);
-        }
+    }
+    else {
+        println!("{}: invalid directory", dir);
     }
 }
 
@@ -46,16 +44,10 @@ fn main() {
         ::std::process::exit(0);
     }
 
-    let mut a = (args[1..]).to_vec();
     let mut v: Vec<File>  = Vec::new();
-    loop {
-        let mut d: Vec<String>   = Vec::new();
-        collect_files(&a[..], &mut v, &mut d);
-        if d.len() > 0 {
-            a = (d[..]).to_vec();
-        } else {
-            break;
-        }
+
+    for dir in &args[1..] {
+        collect_files(dir, &mut v);
     }
     println!("{:?}", v);
 }
