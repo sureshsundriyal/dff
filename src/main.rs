@@ -11,7 +11,7 @@ struct File {
     path : String,
 }
 
-fn collect_files(dir: &String, v: &mut Vec<File>) {
+fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<File>>) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries {
             if let Ok(entry) = entry {
@@ -21,13 +21,20 @@ fn collect_files(dir: &String, v: &mut Vec<File>) {
                         let ft = metadata.file_type();
                         if !ft.is_symlink() {
                             if ft.is_file() {
-                                v.push(File{ inode : metadata.ino(),
+                                let file_size = metadata.len();
+                                if !h.contains_key(&file_size) {
+                                    h.insert(file_size, Vec::new());
+                                }
+                                if let Some(vec) = h.get_mut(&file_size) {
+                                    vec.push(
+                                         File{ inode : metadata.ino(),
                                              size  : metadata.len(),
                                              dev   : metadata.dev(),
                                              path  : String::from(path_str),
-                                        })
+                                         });
+                                }
                             } else if ft.is_dir() {
-                                collect_files(&(String::from(path_str)), v);
+                                collect_files(&(String::from(path_str)), h);
                             }
                         }
                     }
@@ -50,10 +57,13 @@ fn main() {
         ::std::process::exit(0);
     }
 
-    let mut v: Vec<File>  = Vec::new();
+    let mut hmap: HashMap<u64, Vec<File> > = HashMap::new();
 
     for dir in &args[1..] {
-        collect_files(dir, &mut v);
+        collect_files(dir, &mut hmap);
     }
-    println!("{:?}", v);
+
+    // Get rid of all the single entries.
+    hmap.retain(|_, v| v.len() >= 2);
+    println!("{:?}", hmap);
 }
