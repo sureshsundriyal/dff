@@ -1,11 +1,13 @@
 use std::fs;
 use std::env;
+use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
 
 #[derive(Debug)]
 struct File {
     inode: u64,
     size: u64,
+    dev:  u64,
     path : String,
 }
 
@@ -15,15 +17,19 @@ fn collect_files(dir: &String, v: &mut Vec<File>) {
             if let Ok(entry) = entry {
                 let path = entry.path();
                 if let Some(path_str) = path.to_str() {
-                    if path.is_file() {
-                        if let Ok(metadata) = entry.metadata() {
-                            v.push(File{ inode : metadata.ino(),
-                                         size  : metadata.len(),
-                                         path  : String::from(path_str),
-                                    })
+                    if let Ok(metadata) = path.symlink_metadata() {
+                        let ft = metadata.file_type();
+                        if !ft.is_symlink() {
+                            if ft.is_file() {
+                                v.push(File{ inode : metadata.ino(),
+                                             size  : metadata.len(),
+                                             dev   : metadata.dev(),
+                                             path  : String::from(path_str),
+                                        })
+                            } else if ft.is_dir() {
+                                collect_files(&(String::from(path_str)), v);
+                            }
                         }
-                    } else if path.is_dir() {
-                        collect_files(&(String::from(path_str)), v);
                     }
                 }
             }
