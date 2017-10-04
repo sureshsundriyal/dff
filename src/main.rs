@@ -26,6 +26,9 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                         if !ft.is_symlink() {
                             if ft.is_file() {
                                 let file_size = metadata.len();
+                                if file_size == 0 {
+                                    continue;
+                                }
                                 if !h.contains_key(&file_size) {
                                     h.insert(file_size, Vec::new());
                                 }
@@ -100,9 +103,6 @@ fn main() {
     let mut cluster = 1;
 
     for (key, val) in hmap.iter() {
-        if *key == 0 {
-            continue;
-        }
         let mut duplicates: HashMap<u64, Vec<FileEntry> > = HashMap::new();
         find_duplicates(&mut duplicates, &val);
         for (hash, vec) in duplicates {
