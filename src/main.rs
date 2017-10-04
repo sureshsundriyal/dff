@@ -1,5 +1,6 @@
 use std::fs;
 use std::env;
+use std::fs::File;
 use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
 use std::hash::Hasher;
@@ -69,16 +70,21 @@ fn main() {
     // Get rid of all the single entries.
     hmap.retain(|_, v| v.len() >= 2);
 
-    let mut duplicates: HashMap<(u64, u64), Vec<FileEntry> > = HashMap::new();
+
+    let mut cluster = 1;
 
     for (key, val) in hmap.iter() {
+        if *key == 0 {
+            continue;
+        }
+        let mut duplicates: HashMap<u64, Vec<FileEntry> > = HashMap::new();
         for file_entry in val {
-            if let Ok(mut file) = fs::File::open(&file_entry.path) {
+            if let Ok(mut file) = File::open(&file_entry.path) {
                 let mut buf: [u8; 1024] = [0; 1024];
                 if let Ok(nbytes) = file.read(&mut buf) {
                     let mut hasher = DefaultHasher::new();
                     hasher.write(&buf[..nbytes as usize]);
-                    let k = (*key, hasher.finish());
+                    let k = hasher.finish();
                     if !duplicates.contains_key(&k) {
                         duplicates.insert(k, Vec::new());
                     }
@@ -93,8 +99,15 @@ fn main() {
                 }
             }
         }
+        for (hash, vec) in duplicates {
+            if vec.len() >= 2 {
+                println!("{} files in cluster {} (size: {}, digest: {})",
+                         vec.len(), cluster, key, hash);
+                for file_entry in vec {
+                    println!("{}", file_entry.path);
+                }
+                cluster += 1;
+            }
+        }
     }
-
-    duplicates.retain(|_, v| v.len() >= 2);
-    println!("Duplicates: {:?}", duplicates);
 }
