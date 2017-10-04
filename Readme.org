@@ -1,1 +1,3 @@
+#+TITLE: dff -- A simple duplicate file finder.
+
 [[https://travis-ci.org/sureshsundriyal/dff.svg?branch=master]]
