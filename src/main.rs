@@ -52,6 +52,32 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
 }
 
 
+fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
+                   vec: &Vec<FileEntry> ) {
+    for file_entry in vec {
+        if let Ok(mut file) = File::open(&file_entry.path) {
+            let mut buf: [u8; 1024] = [0; 1024];
+            if let Ok(nbytes) = file.read(&mut buf) {
+                let mut hasher = DefaultHasher::new();
+                hasher.write(&buf[..nbytes as usize]);
+                let k = hasher.finish();
+                if !duplicates.contains_key(&k) {
+                    duplicates.insert(k, Vec::new());
+                }
+                if let Some(vec) = duplicates.get_mut(&k) {
+                    vec.push(
+                        FileEntry{ inode : file_entry.inode,
+                            size : file_entry.size,
+                            dev  : file_entry.dev,
+                            path : file_entry.path.to_string(),
+                        });
+                }
+            }
+        }
+    }
+}
+
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -78,27 +104,7 @@ fn main() {
             continue;
         }
         let mut duplicates: HashMap<u64, Vec<FileEntry> > = HashMap::new();
-        for file_entry in val {
-            if let Ok(mut file) = File::open(&file_entry.path) {
-                let mut buf: [u8; 1024] = [0; 1024];
-                if let Ok(nbytes) = file.read(&mut buf) {
-                    let mut hasher = DefaultHasher::new();
-                    hasher.write(&buf[..nbytes as usize]);
-                    let k = hasher.finish();
-                    if !duplicates.contains_key(&k) {
-                        duplicates.insert(k, Vec::new());
-                    }
-                    if let Some(vec) = duplicates.get_mut(&k) {
-                        vec.push(
-                            FileEntry{ inode : file_entry.inode,
-                                size : file_entry.size,
-                                dev  : file_entry.dev,
-                                path : file_entry.path.to_string(),
-                            });
-                    }
-                }
-            }
-        }
+        find_duplicates(&mut duplicates, &val);
         for (hash, vec) in duplicates {
             if vec.len() >= 2 {
                 println!("{} files in cluster {} (size: {}, digest: {})",
