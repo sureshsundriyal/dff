@@ -48,8 +48,7 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                 }
             }
         }
-    }
-    else {
+    } else {
         println!("{}: invalid directory", dir);
     }
 }
@@ -105,6 +104,7 @@ fn main() {
     for (key, val) in hmap.iter() {
         let mut duplicates: HashMap<u64, Vec<FileEntry> > = HashMap::new();
         find_duplicates(&mut duplicates, &val);
+
         for (hash, vec) in duplicates {
             if vec.len() >= 2 {
                 println!("{} files in cluster {} (size: {}, digest: {})",
