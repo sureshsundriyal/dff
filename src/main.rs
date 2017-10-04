@@ -10,7 +10,6 @@ use std::io::Read;
 #[derive(Debug)]
 struct FileEntry {
     inode: u64,
-    size: u64,
     dev:  u64,
     path : String,
 }
@@ -35,7 +34,6 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                                 if let Some(vec) = h.get_mut(&file_size) {
                                     vec.push(
                                          FileEntry{ inode : metadata.ino(),
-                                             size  : metadata.len(),
                                              dev   : metadata.dev(),
                                              path  : String::from(path_str),
                                          });
@@ -69,7 +67,6 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                 if let Some(vec) = duplicates.get_mut(&k) {
                     vec.push(
                         FileEntry{ inode : file_entry.inode,
-                            size : file_entry.size,
                             dev  : file_entry.dev,
                             path : file_entry.path.to_string(),
                         });
