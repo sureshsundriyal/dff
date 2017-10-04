@@ -1,3 +1,18 @@
 #+TITLE: dff -- A simple duplicate file finder.
 
-[[https://travis-ci.org/sureshsundriyal/dff.svg?branch=master]]
+[[[[https://travis-ci.org/sureshsundriyal/dff.svg?branch=master]]]]
+
+=dff= is a tool for locating duplicate files in a directory. The tool is
+modelled after [[http://duff.dreda.org/][Duff]] without any advanced options.
+
+* Building
+
+#+BEGIN_EXAMPLE
+cargo build --release
+#+END_EXAMPLE
+
+* Installing
+
+#+BEGIN_EXAMPLE
+cargo install
+#+END_EXAMPLE
