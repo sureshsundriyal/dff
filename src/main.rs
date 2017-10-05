@@ -28,16 +28,12 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                                 if file_size == 0 {
                                     continue;
                                 }
-                                if !h.contains_key(&file_size) {
-                                    h.insert(file_size, Vec::new());
-                                }
-                                if let Some(vec) = h.get_mut(&file_size) {
-                                    vec.push(
-                                         FileEntry{ inode : metadata.ino(),
-                                             dev   : metadata.dev(),
-                                             path  : String::from(path_str),
-                                         });
-                                }
+                                h.entry(file_size).or_insert_with(Vec::new)
+                                    .push(
+                                     FileEntry{ inode : metadata.ino(),
+                                         dev   : metadata.dev(),
+                                         path  : String::from(path_str),
+                                     });
                             } else if ft.is_dir() {
                                 collect_files(&(String::from(path_str)), h);
                             }
@@ -61,16 +57,12 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                 let mut hasher = DefaultHasher::new();
                 hasher.write(&buf[..nbytes as usize]);
                 let k = hasher.finish();
-                if !duplicates.contains_key(&k) {
-                    duplicates.insert(k, Vec::new());
-                }
-                if let Some(vec) = duplicates.get_mut(&k) {
-                    vec.push(
+                duplicates.entry(k).or_insert_with(Vec::new)
+                    .push(
                         FileEntry{ inode : file_entry.inode,
                             dev  : file_entry.dev,
                             path : file_entry.path.to_string(),
                         });
-                }
             }
         }
     }
