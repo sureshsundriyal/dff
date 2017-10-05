@@ -57,16 +57,16 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                    vec: &Vec<FileEntry>, thorough: bool ) {
     for file_entry in vec {
         if let Ok(mut file) = File::open(&file_entry.path) {
-            let mut contents: Vec<u8> = Vec::new();
-            let mut buf: [u8; 1024] = [0; 1024];
             let mut hash: u64 = 0;
             let mut hasher = DefaultHasher::new();
             if thorough {
+                let mut contents: Vec<u8> = Vec::new();
                 if let Ok(_) = file.read_to_end(&mut contents) {
                     hasher.write(&contents[..]);
                     hash = hasher.finish();
                 }
             } else {
+                let mut buf: [u8; 1024] = [0; 1024];
                 if let Ok(nbytes) = file.read(&mut buf) {
                     hasher.write(&buf[..nbytes as usize]);
                     hash = hasher.finish();
