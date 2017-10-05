@@ -25,15 +25,15 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                         if ft.is_symlink() {
                             continue;
                         } else if ft.is_file() {
-                                match metadata.len() {
-                                    0 => continue,
-                                    i => h.entry(i).or_insert_with(Vec::new)
-                                          .push(
-                                           FileEntry{ inode : metadata.ino(),
-                                               dev   : metadata.dev(),
-                                               path  : String::from(path_str),
-                                           }),
-                                };
+                            match metadata.len() {
+                                0 => continue,
+                                i => h.entry(i).or_insert_with(Vec::new)
+                                      .push(
+                                       FileEntry{ inode : metadata.ino(),
+                                           dev   : metadata.dev(),
+                                           path  : String::from(path_str),
+                                       }),
+                            };
                         } else if ft.is_dir() {
                             collect_files(&(String::from(path_str)), h);
                         }
