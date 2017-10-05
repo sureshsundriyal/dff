@@ -53,17 +53,27 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
     }
 }
 
-
 fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
-                   vec: &Vec<FileEntry> ) {
+                   vec: &Vec<FileEntry>, thorough: bool ) {
     for file_entry in vec {
         if let Ok(mut file) = File::open(&file_entry.path) {
+            let mut contents: Vec<u8> = Vec::new();
             let mut buf: [u8; 1024] = [0; 1024];
-            if let Ok(nbytes) = file.read(&mut buf) {
-                let mut hasher = DefaultHasher::new();
-                hasher.write(&buf[..nbytes as usize]);
-                let k = hasher.finish();
-                duplicates.entry(k).or_insert_with(Vec::new)
+            let mut hash: u64 = 0;
+            let mut hasher = DefaultHasher::new();
+            if thorough {
+                if let Ok(_) = file.read_to_end(&mut contents) {
+                    hasher.write(&contents[..]);
+                    hash = hasher.finish();
+                }
+            } else {
+                if let Ok(nbytes) = file.read(&mut buf) {
+                    hasher.write(&buf[..nbytes as usize]);
+                    hash = hasher.finish();
+                }
+            }
+            if hash != 0 {
+                duplicates.entry(hash).or_insert_with(Vec::new)
                     .push(
                         FileEntry{
                             inode : file_entry.inode,
@@ -74,7 +84,6 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
         }
     }
 }
-
 
 fn main() {
     env_logger::init().unwrap();
@@ -105,7 +114,7 @@ fn main() {
 
     for (key, val) in hmap.iter() {
         let mut duplicates: HashMap<u64, Vec<FileEntry> > = HashMap::new();
-        find_duplicates(&mut duplicates, &val);
+        find_duplicates(&mut duplicates, &val, thorough);
 
         for (hash, vec) in duplicates {
             if vec.len() >= 2 {
