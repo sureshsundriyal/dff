@@ -36,7 +36,8 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                             0 => continue,
                             i => h.entry(i).or_insert_with(Vec::new)
                                   .push(
-                                   FileEntry{ inode : metadata.ino(),
+                                   FileEntry{
+                                       inode : metadata.ino(),
                                        dev   : metadata.dev(),
                                        path  : String::from(path_str),
                                    }),
@@ -62,9 +63,10 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                 let k = hasher.finish();
                 duplicates.entry(k).or_insert_with(Vec::new)
                     .push(
-                        FileEntry{ inode : file_entry.inode,
-                            dev  : file_entry.dev,
-                            path : file_entry.path.to_string(),
+                        FileEntry{
+                            inode : file_entry.inode,
+                            dev   : file_entry.dev,
+                            path  : file_entry.path.to_string(),
                         });
             }
         }
