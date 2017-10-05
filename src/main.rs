@@ -101,7 +101,7 @@ fn main() {
                 println!("{} files in cluster {} (size: {}, digest: {})",
                          vec.len(), cluster, key, hash);
                 // for_each becomes stable v1.22.0 onwards. Should uncomment then.
-                //vec.iter().for_each(|f| println!("{}", i.path));
+                //vec.iter().for_each(|f| println!("{}", f.path));
                 for file_entry in vec {
                     println!("{}", file_entry.path);
                 }
