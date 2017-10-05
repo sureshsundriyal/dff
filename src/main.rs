@@ -15,34 +15,38 @@ struct FileEntry {
 }
 
 fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if let Some(path_str) = path.to_str() {
-                    if let Ok(metadata) = path.symlink_metadata() {
-                        let ft = metadata.file_type();
-                        if ft.is_symlink() {
-                            continue;
-                        } else if ft.is_file() {
-                            match metadata.len() {
-                                0 => continue,
-                                i => h.entry(i).or_insert_with(Vec::new)
-                                      .push(
-                                       FileEntry{ inode : metadata.ino(),
-                                           dev   : metadata.dev(),
-                                           path  : String::from(path_str),
-                                       }),
-                            };
-                        } else if ft.is_dir() {
-                            collect_files(&(String::from(path_str)), h);
-                        }
+    let entries = match fs::read_dir(dir) {
+        Ok(x) => x,
+        _ => {
+            println!("{}: invalid directory", dir);
+            return
+        },
+    };
+
+    for entry in entries {
+        if let Ok(entry) = entry {
+            let path = entry.path();
+            if let Some(path_str) = path.to_str() {
+                if let Ok(metadata) = path.symlink_metadata() {
+                    let ft = metadata.file_type();
+                    if ft.is_symlink() {
+                        continue;
+                    } else if ft.is_file() {
+                        match metadata.len() {
+                            0 => continue,
+                            i => h.entry(i).or_insert_with(Vec::new)
+                                  .push(
+                                   FileEntry{ inode : metadata.ino(),
+                                       dev   : metadata.dev(),
+                                       path  : String::from(path_str),
+                                   }),
+                        };
+                    } else if ft.is_dir() {
+                        collect_files(&(String::from(path_str)), h);
                     }
                 }
             }
         }
-    } else {
-        println!("{}: invalid directory", dir);
     }
 }
 
