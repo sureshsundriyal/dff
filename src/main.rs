@@ -1,11 +1,11 @@
 use std::fs;
 use std::env;
 use std::fs::File;
+use std::io::Read;
+use std::hash::Hasher;
 use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
-use std::hash::Hasher;
 use std::collections::hash_map::DefaultHasher;
-use std::io::Read;
 
 #[derive(Debug)]
 struct FileEntry {
@@ -22,21 +22,20 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                 if let Some(path_str) = path.to_str() {
                     if let Ok(metadata) = path.symlink_metadata() {
                         let ft = metadata.file_type();
-                        if !ft.is_symlink() {
-                            if ft.is_file() {
-                                let file_size = metadata.len();
-                                if file_size == 0 {
-                                    continue;
-                                }
-                                h.entry(file_size).or_insert_with(Vec::new)
-                                    .push(
-                                     FileEntry{ inode : metadata.ino(),
-                                         dev   : metadata.dev(),
-                                         path  : String::from(path_str),
-                                     });
-                            } else if ft.is_dir() {
-                                collect_files(&(String::from(path_str)), h);
-                            }
+                        if ft.is_symlink() {
+                            continue;
+                        } else if ft.is_file() {
+                                match metadata.len() {
+                                    0 => continue,
+                                    i => h.entry(i).or_insert_with(Vec::new)
+                                          .push(
+                                           FileEntry{ inode : metadata.ino(),
+                                               dev   : metadata.dev(),
+                                               path  : String::from(path_str),
+                                           }),
+                                };
+                        } else if ft.is_dir() {
+                            collect_files(&(String::from(path_str)), h);
                         }
                     }
                 }
