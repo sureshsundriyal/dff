@@ -82,14 +82,19 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     // Print out usage if no directories are given.
-    if args.len() == 1 {
-        println!("Usage: {} <dir1> [dir2 [dir3 ...]]", args[0]);
+    if args.len() == 1 || ( args.len() == 2 && args[1] == "--thorough" ) {
+        println!("Usage: {} [--thorough] <dir1> [dir2 [dir3 ...]]", args[0]);
         ::std::process::exit(0);
     }
 
     let mut hmap: HashMap<u64, Vec<FileEntry> > = HashMap::new();
 
+    let mut thorough = false;
     for dir in &args[1..] {
+        if dir == "--thorough" {
+            thorough = true;
+            continue;
+        }
         collect_files(dir, &mut hmap);
     }
 
