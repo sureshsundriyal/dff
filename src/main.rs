@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
 use std::collections::hash_map::DefaultHasher;
 
-#[derive(Debug)]
 struct FileEntry {
     inode: u64,
     dev:  u64,
@@ -103,6 +102,8 @@ fn main() {
             if vec.len() >= 2 {
                 println!("{} files in cluster {} (size: {}, digest: {})",
                          vec.len(), cluster, key, hash);
+                // for_each becomes stable v1.22.0 onwards. Should uncomment then.
+                //vec.iter().for_each(|f| println!("{}", i.path));
                 for file_entry in vec {
                     println!("{}", file_entry.path);
                 }
