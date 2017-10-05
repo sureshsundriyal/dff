@@ -8,6 +8,10 @@ use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
 use std::collections::hash_map::DefaultHasher;
 
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
 struct FileEntry {
     inode: u64,
     dev:  u64,
@@ -19,7 +23,7 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
     let entries = match fs::read_dir(dir) {
         Ok(x) => x,
         _ => {
-            println!("{}: invalid directory", dir);
+            warn!("{}: invalid directory", dir);
             return
         },
     };
@@ -73,6 +77,8 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
 
 
 fn main() {
+    env_logger::init().unwrap();
+
     let args: Vec<String> = env::args().collect();
 
     // Print out usage if no directories are given.
