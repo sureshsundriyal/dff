@@ -55,3 +55,4 @@ of false positives.
     contents instead of hashes
   + [ ] Allow json output in order to facilitate programatically
     parsing the output.
+  + [ ] Try to eliminate/identify hard-links amongst the duplicates.
