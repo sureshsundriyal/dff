@@ -77,26 +77,67 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
     }
 }
 
+fn print_duplicates(vec: &Vec<String>, cluster: i32, key: u64, hash: u64) {
+    println!("{} files in cluster {} (size: {}, digest: {})",
+             vec.len(), cluster, key, hash);
+    // for_each becomes stable v1.22.0 onwards. Should uncomment then.
+    //vec.iter().for_each(|f| println!("{}", f.path));
+    for file_entry in vec {
+        println!("{}", file_entry);
+    }
+}
+
+fn exhaustive_search(emap: &mut HashMap<Vec<u8>, Vec<String>>,
+                     vec: &Vec<String>) {
+    for file_entry in vec {
+        if let Ok(mut file) = File::open(file_entry) {
+            let mut contents: Vec<u8> = Vec::new();
+            if let Ok(_) = file.read_to_end(&mut contents) {
+                emap.entry(contents).or_insert_with(Vec::new)
+                    .push(file_entry.to_string());
+            }
+        }
+    }
+}
+
+fn print_usage_and_exit(binary_name: &String) {
+        println!("Usage: {} [-t] [-e] <dir1> [dir2 [dir3 ...]]", binary_name);
+        ::std::process::exit(0);
+}
+
 fn main() {
     env_logger::init().unwrap();
 
     let args: Vec<String> = env::args().collect();
 
+    let binary_name = &args[0];
+
     // Print out usage if no directories are given.
-    if args.len() == 1 || ( args.len() == 2 && args[1] == "-t" ) {
-        println!("Usage: {} [-t] <dir1> [dir2 [dir3 ...]]", args[0]);
-        ::std::process::exit(0);
+    if args.len() == 1 {
+        print_usage_and_exit(binary_name);
     }
 
     let mut hmap: HashMap<u64, Vec<String> > = HashMap::new();
 
     let mut thorough = false;
+    let mut exhaustive = false;
+    let mut print_usage = true;
+
     for dir in &args[1..] {
         if dir == "-t" {
             thorough = true;
             continue;
+        } else if dir == "-e" {
+            thorough = false;
+            exhaustive = false;
+            continue;
         }
+        print_usage = false;
         collect_files(dir, &mut hmap);
+    }
+
+    if print_usage {
+        print_usage_and_exit(binary_name);
     }
 
     // Get rid of all the single entries.
@@ -104,20 +145,25 @@ fn main() {
 
     let mut cluster = 1;
 
-    for (key, val) in hmap.iter() {
+    for (key, val) in hmap {
         let mut duplicates: HashMap<u64, Vec<String> > = HashMap::new();
         find_duplicates(&mut duplicates, &val, thorough);
 
         for (hash, vec) in duplicates {
             if vec.len() >= 2 {
-                println!("{} files in cluster {} (size: {}, digest: {})",
-                         vec.len(), cluster, key, hash);
-                // for_each becomes stable v1.22.0 onwards. Should uncomment then.
-                //vec.iter().for_each(|f| println!("{}", f.path));
-                for file_entry in vec {
-                    println!("{}", file_entry);
+                if exhaustive {
+                    let mut emap: HashMap<Vec<u8>, Vec<String>> = HashMap::new();
+                    exhaustive_search(&mut emap, &vec);
+                    for (_, v) in emap {
+                        if v.len() >= 2 {
+                            print_duplicates(&v, cluster, key, hash);
+                        }
+                        cluster += 1;
+                    }
+                } else {
+                    print_duplicates(&vec, cluster, key, hash);
+                    cluster += 1;
                 }
-                cluster += 1;
             }
         }
     }

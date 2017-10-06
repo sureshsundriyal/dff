@@ -50,10 +50,17 @@ In =thorough= mode, instead of comparing the hash of first 1024 bytes; hash of
 the complete file contents are compared. This greatly reduces the probability
 of false positives.
 
+** Exhaustive Mode
+
+#+BEGIN_EXAMPLE
+dff -e <dir1> [dir2 [dir3...]]
+#+END_EXAMPLE
+
+In =exhaustive= mode, the complete file contents are compared and should not
+have any false positives.
+
 * ToDo
 
-  + [ ] Implement an exhaustive mode which compares the actual file
-    contents instead of hashes
   + [ ] Allow json output in order to facilitate programatically
     parsing the output.
   + [ ] Try to eliminate/identify hard-links amongst the duplicates.
