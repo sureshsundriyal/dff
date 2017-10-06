@@ -37,7 +37,7 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                 continue;
             } else if ft.is_file() {
                 match metadata.len() {
-                    0 => continue,
+                    0 => continue, //Ignore empty files.
                     i => h.entry(i).or_insert_with(Vec::new)
                           .push(
                            FileEntry{
