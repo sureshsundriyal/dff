@@ -12,13 +12,7 @@ use std::collections::hash_map::DefaultHasher;
 extern crate log;
 extern crate env_logger;
 
-struct FileEntry {
-    inode: u64,
-    dev:  u64,
-    path : String,
-}
-
-fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
+fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<String>>) {
 
     let entries = match fs::read_dir(dir) {
         Ok(x) => x,
@@ -39,12 +33,7 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
                 match metadata.len() {
                     0 => continue, //Ignore empty files.
                     i => h.entry(i).or_insert_with(Vec::new)
-                          .push(
-                           FileEntry{
-                               inode : metadata.ino(),
-                               dev   : metadata.dev(),
-                               path  : String::from(path_str),
-                           }),
+                          .push(String::from(path_str)),
                 };
             } else if ft.is_dir() {
                 collect_files(&(String::from(path_str)), h);
@@ -55,10 +44,10 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
     }
 }
 
-fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
-                   vec: &Vec<FileEntry>, thorough: bool ) {
+fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
+                   vec: &Vec<String>, thorough: bool ) {
     for file_entry in vec {
-        if let Ok(mut file) = File::open(&file_entry.path) {
+        if let Ok(mut file) = File::open(file_entry) {
             let mut hash: u64 = 0;
             let mut hasher = DefaultHasher::new();
             if thorough {
@@ -67,7 +56,7 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                     hasher.write(&contents[..]);
                     hash = hasher.finish();
                 } else {
-                    warn!("Failed to read {}", file_entry.path);
+                    warn!("Failed to read {}", file_entry);
                 }
             } else {
                 let mut buf: [u8; 1024] = [0; 1024];
@@ -75,20 +64,15 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                     hasher.write(&buf[..nbytes as usize]);
                     hash = hasher.finish();
                 } else {
-                    warn!("Failed to read {} chunk", file_entry.path);
+                    warn!("Failed to read {} chunk", file_entry);
                 }
             }
             if hash != 0 {
                 duplicates.entry(hash).or_insert_with(Vec::new)
-                    .push(
-                        FileEntry{
-                            inode : file_entry.inode,
-                            dev   : file_entry.dev,
-                            path  : file_entry.path.to_string(),
-                        });
+                    .push(file_entry.to_string());
             }
         } else {
-            warn!("Failed to open file {}", file_entry.path);
+            warn!("Failed to open file {}", file_entry);
         }
     }
 }
@@ -104,7 +88,7 @@ fn main() {
         ::std::process::exit(0);
     }
 
-    let mut hmap: HashMap<u64, Vec<FileEntry> > = HashMap::new();
+    let mut hmap: HashMap<u64, Vec<String> > = HashMap::new();
 
     let mut thorough = false;
     for dir in &args[1..] {
@@ -121,7 +105,7 @@ fn main() {
     let mut cluster = 1;
 
     for (key, val) in hmap.iter() {
-        let mut duplicates: HashMap<u64, Vec<FileEntry> > = HashMap::new();
+        let mut duplicates: HashMap<u64, Vec<String> > = HashMap::new();
         find_duplicates(&mut duplicates, &val, thorough);
 
         for (hash, vec) in duplicates {
@@ -131,7 +115,7 @@ fn main() {
                 // for_each becomes stable v1.22.0 onwards. Should uncomment then.
                 //vec.iter().for_each(|f| println!("{}", f.path));
                 for file_entry in vec {
-                    println!("{}", file_entry.path);
+                    println!("{}", file_entry);
                 }
                 cluster += 1;
             }
