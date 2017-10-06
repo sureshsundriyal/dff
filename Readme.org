@@ -19,11 +19,11 @@ cargo install
 
 * Usage
 
-In any mode of operation, =dff= will:
+In any mode of operation:
 
   + Symlinks are ignored
   + Zero-size files are ignored
-  + Recursively search through the specified directories
+  + The specified files are searched recursively
 
 ** Normal Mode
 
