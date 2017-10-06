@@ -37,7 +37,7 @@ searching for duplicates using the following algorithm:
   + Compare the hashes of the beginning 1024 bytes to check whether
     they are equal.
 
-The two checks above quickly pin-point files which might be equal.
+The two checks above quickly pin-point files which might be same.
 
 ** Thorough Mode
 
