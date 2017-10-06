@@ -49,6 +49,8 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<FileEntry>>) {
             } else if ft.is_dir() {
                 collect_files(&(String::from(path_str)), h);
             }
+        } else {
+            warn!("Failed to retrieve metadata for {}", path.to_str().unwrap());
         }
     }
 }
@@ -64,12 +66,16 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                 if let Ok(_) = file.read_to_end(&mut contents) {
                     hasher.write(&contents[..]);
                     hash = hasher.finish();
+                } else {
+                    warn!("Failed to read {}", file_entry.path);
                 }
             } else {
                 let mut buf: [u8; 1024] = [0; 1024];
                 if let Ok(nbytes) = file.read(&mut buf) {
                     hasher.write(&buf[..nbytes as usize]);
                     hash = hasher.finish();
+                } else {
+                    warn!("Failed to read {} chunk", file_entry.path);
                 }
             }
             if hash != 0 {
@@ -81,6 +87,8 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<FileEntry>>,
                             path  : file_entry.path.to_string(),
                         });
             }
+        } else {
+            warn!("Failed to open file {}", file_entry.path);
         }
     }
 }
