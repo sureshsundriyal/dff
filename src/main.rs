@@ -112,13 +112,13 @@ fn print_usage_and_exit(binary_name: &String) {
 fn main() {
     env_logger::init().unwrap();
 
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
 
-    let binary_name = &args[0];
+    let binary_name = args.remove(0);
 
     // Print out usage if no directories are given.
-    if args.len() == 1 {
-        print_usage_and_exit(binary_name);
+    if args.len() == 0 {
+        print_usage_and_exit(&binary_name);
     }
 
     let mut hmap: HashMap<u64, Vec<String> > = HashMap::new();
@@ -127,7 +127,7 @@ fn main() {
     let mut exhaustive = false;
     let mut print_usage = true;
 
-    for dir in &args[1..] {
+    for dir in &args[..] {
         if dir == "-t" {
             thorough = true;
             continue;
@@ -141,7 +141,7 @@ fn main() {
     }
 
     if print_usage {
-        print_usage_and_exit(binary_name);
+        print_usage_and_exit(&binary_name);
     }
 
     // Get rid of all the single entries.
