@@ -104,22 +104,12 @@ fn exhaustive_search(emap: &mut HashMap<Vec<u8>, Vec<String>>,
     }
 }
 
-fn print_usage_and_exit(binary_name: &String) {
-        println!("Usage: {} [-t] [-e] <dir1> [dir2 [dir3 ...]]", binary_name);
-        ::std::process::exit(0);
-}
-
 fn main() {
     env_logger::init().unwrap();
 
     let mut args: Vec<String> = env::args().collect();
 
     let binary_name = args.remove(0);
-
-    // Print out usage if no directories are given.
-    if args.len() == 0 {
-        print_usage_and_exit(&binary_name);
-    }
 
     let mut hmap: HashMap<u64, Vec<String> > = HashMap::new();
 
@@ -141,7 +131,8 @@ fn main() {
     }
 
     if print_usage {
-        print_usage_and_exit(&binary_name);
+        println!("Usage: {} [-t] [-e] <dir1> [dir2 [dir3 ...]]", binary_name);
+        ::std::process::exit(0);
     }
 
     // Get rid of all the single entries.
