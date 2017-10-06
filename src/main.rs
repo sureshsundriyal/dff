@@ -99,8 +99,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     // Print out usage if no directories are given.
-    if args.len() == 1 || ( args.len() == 2 && args[1] == "--thorough" ) {
-        println!("Usage: {} [--thorough] <dir1> [dir2 [dir3 ...]]", args[0]);
+    if args.len() == 1 || ( args.len() == 2 && args[1] == "-t" ) {
+        println!("Usage: {} [-t] <dir1> [dir2 [dir3 ...]]", args[0]);
         ::std::process::exit(0);
     }
 
@@ -108,7 +108,7 @@ fn main() {
 
     let mut thorough = false;
     for dir in &args[1..] {
-        if dir == "--thorough" {
+        if dir == "-t" {
             thorough = true;
             continue;
         }

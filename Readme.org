@@ -42,7 +42,7 @@ The two checks above quickly pin-point files which might be same.
 ** Thorough Mode
 
 #+BEGIN_EXAMPLE
-dff --thorough <dir1> [dir2 [dir3...]]
+dff -t <dir1> [dir2 [dir3...]]
 #+END_EXAMPLE
 
 In =thorough= mode, instead of comparing the hash of first 1024 bytes; hash of
