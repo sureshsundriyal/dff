@@ -21,8 +21,9 @@ cargo install
 
 In any mode of operation, =dff= will:
 
-  + Recursively search through the specified directories
   + Symlinks are ignored
+  + Zero-size files are ignored
+  + Recursively search through the specified directories
 
 ** Normal Mode
 
@@ -33,7 +34,7 @@ dff <dir1> [dir2 [dir3...]]
 In normal mode of operation; =dff= searches through the specified directories
 searching for duplicates using the following algorithm:
 
-  + Only compare files if they're of equal size.
+  + Only compare files if they are of equal sizes.
   + Compare the hashes of the beginning 1024 bytes to check whether
     they are equal.
 
