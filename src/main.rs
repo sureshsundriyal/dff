@@ -95,7 +95,11 @@ fn exhaustive_search(emap: &mut HashMap<Vec<u8>, Vec<String>>,
             if let Ok(_) = file.read_to_end(&mut contents) {
                 emap.entry(contents).or_insert_with(Vec::new)
                     .push(file_entry.to_string());
+            } else {
+                warn!("Failed to read {}", file_entry);
             }
+        } else {
+            warn!("Failed to open {}", file_entry);
         }
     }
 }
@@ -157,8 +161,8 @@ fn main() {
                     for (_, v) in emap {
                         if v.len() >= 2 {
                             print_duplicates(&v, cluster, key, hash);
+                            cluster += 1;
                         }
-                        cluster += 1;
                     }
                 } else {
                     print_duplicates(&vec, cluster, key, hash);
