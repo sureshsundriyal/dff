@@ -5,7 +5,7 @@ use std::io::Read;
 use std::hash::Hasher;
 use std::path::PathBuf;
 use std::collections::HashMap;
-use std::os::unix::fs::MetadataExt;
+//use std::os::unix::fs::MetadataExt;
 use std::collections::hash_map::DefaultHasher;
 
 #[macro_use]
