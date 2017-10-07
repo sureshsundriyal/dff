@@ -9,13 +9,12 @@ use std::collections::BTreeSet;
 use std::os::unix::fs::MetadataExt;
 use std::collections::hash_map::DefaultHasher;
 
-extern crate serde;
-extern crate serde_json;
-
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 
+extern crate serde;
+extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
