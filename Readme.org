@@ -59,8 +59,15 @@ dff -e <dir1> [dir2 [dir3...]]
 In =exhaustive= mode, the complete file contents are compared and should not
 have any false positives.
 
+** JSON output
+
+#+BEGIN_EXAMPLE
+dff -j [-t|-e] <dir1> [dir2 [dir3...]]
+#+END_EXAMPLE
+
+In order to produce JSON output, use the =-j= flag. This is useful for
+programatically parsing the data.
+
 * ToDo
 
-  + [ ] Allow json output in order to facilitate programatically
-    parsing the output.
   + [ ] Try to eliminate/identify hard-links amongst the duplicates.

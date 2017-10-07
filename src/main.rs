@@ -8,9 +8,25 @@ use std::collections::HashMap;
 //use std::os::unix::fs::MetadataExt;
 use std::collections::hash_map::DefaultHasher;
 
+extern crate serde;
+extern crate serde_json;
+
 #[macro_use]
 extern crate log;
 extern crate env_logger;
+
+#[macro_use]
+extern crate serde_derive;
+
+
+
+#[derive(Serialize, Deserialize)]
+struct FileEntry {
+    size : u64,
+    hash : u64,
+    files : Vec<String>,
+}
+
 
 fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<String>>) {
 
@@ -77,13 +93,22 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
     }
 }
 
-fn print_duplicates(vec: &Vec<String>, cluster: i32, key: u64, hash: u64) {
-    println!("{} files in cluster {} (size: {}, digest: {})",
-             vec.len(), cluster, key, hash);
-    // for_each becomes stable v1.22.0 onwards. Should uncomment then.
-    //vec.iter().for_each(|f| println!("{}", f.path));
-    for file_entry in vec {
-        println!("{}", file_entry);
+fn print_duplicates(vec: &Vec<String>, cluster: i32, key: u64, hash: u64,
+                    json_list: &mut Vec<FileEntry>, json_output: bool) {
+    if json_output {
+        json_list.push( FileEntry {
+            size  : key,
+            hash  : hash,
+            files : vec.to_vec(),
+        });
+    } else {
+        println!("{} files in cluster {} (size: {}, digest: {})",
+                 vec.len(), cluster, key, hash);
+        // for_each becomes stable v1.22.0 onwards. Should uncomment then.
+        //vec.iter().for_each(|f| println!("{}", f.path));
+        for file_entry in vec {
+            println!("{}", file_entry);
+        }
     }
 }
 
@@ -115,6 +140,7 @@ fn main() {
 
     let mut thorough = false;
     let mut exhaustive = false;
+    let mut json_output = false;
     let mut print_usage = true;
 
     for dir in &args[..] {
@@ -124,6 +150,9 @@ fn main() {
         } else if dir == "-e" {
             thorough = false;
             exhaustive = false;
+            continue;
+        } else if dir == "-j" {
+            json_output = true;
             continue;
         }
         print_usage = false;
@@ -140,6 +169,7 @@ fn main() {
 
     let mut cluster = 1;
 
+    let mut json_list : Vec<FileEntry> = Vec::new();
     for (key, val) in hmap {
         let mut duplicates: HashMap<u64, Vec<String> > = HashMap::new();
         find_duplicates(&mut duplicates, &val, thorough);
@@ -151,15 +181,20 @@ fn main() {
                     exhaustive_search(&mut emap, &vec);
                     for (_, v) in emap {
                         if v.len() >= 2 {
-                            print_duplicates(&v, cluster, key, hash);
+                            print_duplicates(&v, cluster, key, hash,
+                                             &mut json_list, json_output);
                             cluster += 1;
                         }
                     }
                 } else {
-                    print_duplicates(&vec, cluster, key, hash);
+                    print_duplicates(&vec, cluster, key, hash, &mut json_list,
+                                     json_output);
                     cluster += 1;
                 }
             }
         }
+    }
+    if json_output {
+        println!("{}", serde_json::to_string_pretty(&json_list).unwrap());
     }
 }
