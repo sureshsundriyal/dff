@@ -23,7 +23,7 @@ In any mode of operation:
 
   + Symlinks are ignored
   + Zero-size files are ignored
-  + The specified files are searched recursively
+  + The specified directories are searched recursively
 
 ** Normal Mode
 
