@@ -5,7 +5,8 @@ use std::io::Read;
 use std::hash::Hasher;
 use std::path::PathBuf;
 use std::collections::HashMap;
-//use std::os::unix::fs::MetadataExt;
+use std::collections::BTreeSet;
+use std::os::unix::fs::MetadataExt;
 use std::collections::hash_map::DefaultHasher;
 
 extern crate serde;
@@ -28,7 +29,8 @@ struct FileEntry {
 }
 
 
-fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<String>>) {
+fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<String>>,
+                 b: &mut BTreeSet<(u64, u64)>) {
 
     let entries = match fs::read_dir(dir) {
         Ok(x) => x,
@@ -46,13 +48,19 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<String>>) {
             if ft.is_symlink() {
                 continue;
             } else if ft.is_file() {
+                let file_ino = metadata.ino();
+                let file_dev = metadata.dev();
+                if b.contains(&(file_ino, file_dev)) {
+                    continue;
+                }
+                b.insert((file_ino, file_dev));
                 match metadata.len() {
                     0 => continue, //Ignore empty files.
                     i => h.entry(i).or_insert_with(Vec::new)
                           .push(String::from(path_str)),
                 };
             } else if ft.is_dir() {
-                collect_files(&(String::from(path_str)), h);
+                collect_files(&(String::from(path_str)), h, b);
             }
         } else {
             warn!("Failed to retrieve metadata for {}", path.to_str().unwrap());
@@ -137,6 +145,7 @@ fn main() {
     let binary_name = args.remove(0);
 
     let mut hmap: HashMap<u64, Vec<String> > = HashMap::new();
+    let mut bset: BTreeSet<(u64, u64)> = BTreeSet::new();
 
     let mut thorough = false;
     let mut exhaustive = false;
@@ -144,23 +153,30 @@ fn main() {
     let mut print_usage = true;
 
     for dir in &args[..] {
-        if dir == "-t" {
-            thorough = true;
-            continue;
-        } else if dir == "-e" {
-            thorough = false;
-            exhaustive = false;
-            continue;
-        } else if dir == "-j" {
-            json_output = true;
-            continue;
+        match dir.as_ref() {
+            "-t" => {
+                thorough = true;
+                continue;
+            },
+            "-e" => {
+                thorough = false;
+                exhaustive = false;
+                continue;
+            },
+            "-j" => {
+                json_output = true;
+                continue;
+            },
+            _ => {
+                print_usage = false;
+                collect_files(dir, &mut hmap, &mut bset);
+            },
         }
-        print_usage = false;
-        collect_files(dir, &mut hmap);
     }
 
     if print_usage {
-        println!("Usage: {} [-t] [-e] <dir1> [dir2 [dir3 ...]]", binary_name);
+        println!("Usage: {} [-t] [-e] [-j] <dir1> [dir2 [dir3 ...]]",
+                 binary_name);
         ::std::process::exit(0);
     }
 

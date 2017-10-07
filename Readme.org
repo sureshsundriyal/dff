@@ -24,6 +24,7 @@ In any mode of operation:
   + Symlinks are ignored
   + Zero-size files are ignored
   + The specified directories are searched recursively
+  + Hard links are not reported as duplicates
 
 ** Normal Mode
 
@@ -67,7 +68,3 @@ dff -j [-t|-e] <dir1> [dir2 [dir3...]]
 
 In order to produce JSON output, use the =-j= flag. This is useful for
 programatically parsing the data.
-
-* ToDo
-
-  + [ ] Try to eliminate/identify hard-links amongst the duplicates.
