@@ -28,8 +28,8 @@ struct FileEntry {
 }
 
 
-fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<String>>,
-                 b: &mut BTreeSet<(u64, u64)>) {
+fn collect_files(dir: &String, files: &mut HashMap<u64, Vec<String>>,
+                 inodes: &mut BTreeSet<(u64, u64)>) {
 
     let entries = match fs::read_dir(dir) {
         Ok(x) => x,
@@ -39,27 +39,28 @@ fn collect_files(dir: &String, h: &mut HashMap<u64, Vec<String>>,
         },
     };
 
-    for path in  entries.filter( |x| x.is_ok() ).map( |x| x.unwrap().path() )
-                .collect::<Vec<PathBuf>>() {
+    for path in  entries.filter( |x| x.is_ok() )
+                        .map( |x| x.unwrap().path() )
+                        .collect::<Vec<PathBuf>>() {
         if let (Some(path_str), Ok(metadata)) =
                 (path.to_str(), path.symlink_metadata()) {
             let ft = metadata.file_type();
             if ft.is_symlink() {
                 continue;
             } else if ft.is_file() {
-                let file_ino = metadata.ino();
-                let file_dev = metadata.dev();
-                if b.contains(&(file_ino, file_dev)) {
+                let inode = metadata.ino();
+                let device = metadata.dev();
+                if inodes.contains(&(inode, device)) {
                     continue;
                 }
-                b.insert((file_ino, file_dev));
+                inodes.insert((inode, device));
                 match metadata.len() {
                     0 => continue, //Ignore empty files.
-                    i => h.entry(i).or_insert_with(Vec::new)
+                    i => files.entry(i).or_insert_with(Vec::new)
                           .push(String::from(path_str)),
                 };
             } else if ft.is_dir() {
-                collect_files(&(String::from(path_str)), h, b);
+                collect_files(&(String::from(path_str)), files, inodes);
             }
         } else {
             warn!("Failed to retrieve metadata for {}", path.to_str().unwrap());
