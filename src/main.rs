@@ -18,15 +18,12 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-
-
 #[derive(Serialize, Deserialize)]
 struct FileEntry {
     size : u64,
     hash : u64,
     files : Vec<String>,
 }
-
 
 fn collect_files(dir: &String, files: &mut HashMap<u64, Vec<String>>,
                  inodes: &mut BTreeSet<(u64, u64)>) {
