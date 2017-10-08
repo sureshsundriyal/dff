@@ -138,14 +138,14 @@ fn print_duplicates(
     }
 }
 
-fn exhaustive_search(emap: &mut HashMap<Vec<u8>, Vec<String>>,
-                     vec: &Vec<String>)
+fn exhaustive_search(content_map: &mut HashMap<Vec<u8>, Vec<String>>,
+                     files: &Vec<String>)
 {
-    for file_entry in vec {
+    for file_entry in files {
         if let Ok(mut file) = File::open(file_entry) {
             let mut contents: Vec<u8> = Vec::new();
             if let Ok(_) = file.read_to_end(&mut contents) {
-                emap.entry(contents)
+                content_map.entry(contents)
                     .or_insert_with(Vec::new)
                     .push(file_entry.to_string());
             } else {
@@ -217,9 +217,9 @@ fn main() {
         for (hash, vec) in duplicates {
             if vec.len() >= 2 {
                 if exhaustive {
-                    let mut emap: HashMap<Vec<u8>, Vec<String>> = HashMap::new();
-                    exhaustive_search(&mut emap, &vec);
-                    for (_, v) in emap {
+                    let mut content_map: HashMap<Vec<u8>, Vec<String>> = HashMap::new();
+                    exhaustive_search(&mut content_map, &vec);
+                    for (_, v) in content_map {
                         if v.len() >= 2 {
                             print_duplicates(&v, cluster, key, hash, &mut json,
                                              json_output);
