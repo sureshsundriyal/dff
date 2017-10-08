@@ -221,14 +221,26 @@ fn main() {
                     exhaustive_search(&mut content_map, &vec);
                     for (_, v) in content_map {
                         if v.len() >= 2 {
-                            print_duplicates(&v, cluster, key, hash, &mut json,
-                                             json_output);
+                            print_duplicates(
+                                &v,
+                                cluster,
+                                key,
+                                hash,
+                                &mut json,
+                                json_output
+                            );
                             cluster += 1;
                         }
                     }
                 } else {
-                    print_duplicates(&vec, cluster, key, hash, &mut json,
-                                     json_output);
+                    print_duplicates(
+                        &vec,
+                        cluster,
+                        key,
+                        hash,
+                        &mut json,
+                        json_output
+                    );
                     cluster += 1;
                 }
             }
