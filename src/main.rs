@@ -9,38 +9,43 @@ use std::collections::BTreeSet;
 use std::os::unix::fs::MetadataExt;
 use std::collections::hash_map::DefaultHasher;
 
+extern crate env_logger;
 #[macro_use]
 extern crate log;
-extern crate env_logger;
 
 extern crate serde;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 
 #[derive(Serialize, Deserialize)]
 struct FileEntry {
-    size : u64,
-    hash : u64,
-    files : Vec<String>,
+    size: u64,
+    hash: u64,
+    files: Vec<String>,
 }
 
-fn collect_files(dir: &String, files: &mut HashMap<u64, Vec<String>>,
-                 inodes: &mut BTreeSet<(u64, u64)>) {
-
+fn collect_files(
+    dir: &String,
+    files: &mut HashMap<u64, Vec<String>>,
+    inodes: &mut BTreeSet<(u64, u64)>,
+) {
     let entries = match fs::read_dir(dir) {
         Ok(x) => x,
         _ => {
             warn!("{}: invalid directory", dir);
-            return
-        },
+            return;
+        }
     };
 
-    for path in  entries.filter( |x| x.is_ok() )
-                        .map( |x| x.unwrap().path() )
-                        .collect::<Vec<PathBuf>>() {
-        if let (Some(path_str), Ok(metadata)) =
-                (path.to_str(), path.symlink_metadata()) {
+    for path in entries
+        .filter(|x| x.is_ok())
+        .map(|x| x.unwrap().path())
+        .collect::<Vec<PathBuf>>()
+    {
+        if let (Some(path_str), Ok(metadata)) = (path.to_str(),
+                                                 path.symlink_metadata())
+        {
             let ft = metadata.file_type();
             if ft.is_symlink() {
                 continue;
@@ -53,8 +58,10 @@ fn collect_files(dir: &String, files: &mut HashMap<u64, Vec<String>>,
                 inodes.insert((inode, device));
                 match metadata.len() {
                     0 => continue, //Ignore empty files.
-                    i => files.entry(i).or_insert_with(Vec::new)
-                          .push(String::from(path_str)),
+                    i => files
+                        .entry(i)
+                        .or_insert_with(Vec::new)
+                        .push(String::from(path_str)),
                 };
             } else if ft.is_dir() {
                 collect_files(&(String::from(path_str)), files, inodes);
@@ -66,7 +73,8 @@ fn collect_files(dir: &String, files: &mut HashMap<u64, Vec<String>>,
 }
 
 fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
-                   vec: &Vec<String>, thorough: bool ) {
+                   vec: &Vec<String>, thorough: bool)
+{
     for file_entry in vec {
         if let Ok(mut file) = File::open(file_entry) {
             let mut hash: u64 = 0;
@@ -89,7 +97,9 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
                 }
             }
             if hash != 0 {
-                duplicates.entry(hash).or_insert_with(Vec::new)
+                duplicates
+                    .entry(hash)
+                    .or_insert_with(Vec::new)
                     .push(file_entry.to_string());
             }
         } else {
@@ -98,17 +108,28 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
     }
 }
 
-fn print_duplicates(files: &Vec<String>, cluster: i32, size: u64, hash: u64,
-                    json_list: &mut Vec<FileEntry>, json_output: bool) {
+fn print_duplicates(
+    files: &Vec<String>,
+    cluster: i32,
+    size: u64,
+    hash: u64,
+    json_list: &mut Vec<FileEntry>,
+    json_output: bool,
+) {
     if json_output {
-        json_list.push( FileEntry {
+        json_list.push(FileEntry {
             size,
             hash,
             files: files.to_vec(),
-       });
+        });
     } else {
-        println!("{} files in cluster {} (size: {}, digest: {})",
-                 files.len(), cluster, size, hash);
+        println!(
+            "{} files in cluster {} (size: {}, digest: {})",
+            files.len(),
+            cluster,
+            size,
+            hash
+        );
         // for_each becomes stable v1.22.0 onwards. Should uncomment then.
         //files.iter().for_each(|f| println!("{}", f.path));
         for file in files {
@@ -118,12 +139,14 @@ fn print_duplicates(files: &Vec<String>, cluster: i32, size: u64, hash: u64,
 }
 
 fn exhaustive_search(emap: &mut HashMap<Vec<u8>, Vec<String>>,
-                     vec: &Vec<String>) {
+                     vec: &Vec<String>)
+{
     for file_entry in vec {
         if let Ok(mut file) = File::open(file_entry) {
             let mut contents: Vec<u8> = Vec::new();
             if let Ok(_) = file.read_to_end(&mut contents) {
-                emap.entry(contents).or_insert_with(Vec::new)
+                emap.entry(contents)
+                    .or_insert_with(Vec::new)
                     .push(file_entry.to_string());
             } else {
                 warn!("Failed to read {}", file_entry);
@@ -141,7 +164,7 @@ fn main() {
 
     let binary_name = args.remove(0);
 
-    let mut files: HashMap<u64, Vec<String> > = HashMap::new();
+    let mut files: HashMap<u64, Vec<String>> = HashMap::new();
 
     let mut thorough = false;
     let mut exhaustive = false;
@@ -155,27 +178,29 @@ fn main() {
                 "-t" => {
                     thorough = true;
                     continue;
-                },
+                }
                 "-e" => {
                     thorough = false;
                     exhaustive = false;
                     continue;
-                },
+                }
                 "-j" => {
                     json_output = true;
                     continue;
-                },
+                }
                 _ => {
                     print_usage = false;
                     collect_files(dir, &mut files, &mut inodes);
-                },
+                }
             }
         }
     }
 
     if print_usage {
-        println!("Usage: {} [-t] [-e] [-j] <dir1> [dir2 [dir3 ...]]",
-                 binary_name);
+        println!(
+            "Usage: {} [-t] [-e] [-j] <dir1> [dir2 [dir3 ...]]",
+            binary_name
+        );
         ::std::process::exit(0);
     }
 
@@ -184,9 +209,9 @@ fn main() {
 
     let mut cluster = 1;
 
-    let mut json : Vec<FileEntry> = Vec::new();
+    let mut json: Vec<FileEntry> = Vec::new();
     for (key, val) in files {
-        let mut duplicates: HashMap<u64, Vec<String> > = HashMap::new();
+        let mut duplicates: HashMap<u64, Vec<String>> = HashMap::new();
         find_duplicates(&mut duplicates, &val, thorough);
 
         for (hash, vec) in duplicates {
@@ -196,8 +221,8 @@ fn main() {
                     exhaustive_search(&mut emap, &vec);
                     for (_, v) in emap {
                         if v.len() >= 2 {
-                            print_duplicates(&v, cluster, key, hash,
-                                             &mut json, json_output);
+                            print_duplicates(&v, cluster, key, hash, &mut json,
+                                             json_output);
                             cluster += 1;
                         }
                     }
