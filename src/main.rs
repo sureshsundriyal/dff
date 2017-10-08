@@ -98,21 +98,21 @@ fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
     }
 }
 
-fn print_duplicates(vec: &Vec<String>, cluster: i32, key: u64, hash: u64,
+fn print_duplicates(files: &Vec<String>, cluster: i32, size: u64, hash: u64,
                     json_list: &mut Vec<FileEntry>, json_output: bool) {
     if json_output {
         json_list.push( FileEntry {
-            size  : key,
-            hash  : hash,
-            files : vec.to_vec(),
-        });
+            size,
+            hash,
+            files: files.to_vec(),
+       });
     } else {
         println!("{} files in cluster {} (size: {}, digest: {})",
-                 vec.len(), cluster, key, hash);
+                 files.len(), cluster, size, hash);
         // for_each becomes stable v1.22.0 onwards. Should uncomment then.
-        //vec.iter().for_each(|f| println!("{}", f.path));
-        for file_entry in vec {
-            println!("{}", file_entry);
+        //files.iter().for_each(|f| println!("{}", f.path));
+        for file in files {
+            println!("{}", file);
         }
     }
 }
@@ -141,33 +141,35 @@ fn main() {
 
     let binary_name = args.remove(0);
 
-    let mut hmap: HashMap<u64, Vec<String> > = HashMap::new();
-    let mut bset: BTreeSet<(u64, u64)> = BTreeSet::new();
+    let mut files: HashMap<u64, Vec<String> > = HashMap::new();
 
     let mut thorough = false;
     let mut exhaustive = false;
     let mut json_output = false;
     let mut print_usage = true;
 
-    for dir in &args[..] {
-        match dir.as_ref() {
-            "-t" => {
-                thorough = true;
-                continue;
-            },
-            "-e" => {
-                thorough = false;
-                exhaustive = false;
-                continue;
-            },
-            "-j" => {
-                json_output = true;
-                continue;
-            },
-            _ => {
-                print_usage = false;
-                collect_files(dir, &mut hmap, &mut bset);
-            },
+    {
+        let mut inodes: BTreeSet<(u64, u64)> = BTreeSet::new();
+        for dir in &args[..] {
+            match dir.as_ref() {
+                "-t" => {
+                    thorough = true;
+                    continue;
+                },
+                "-e" => {
+                    thorough = false;
+                    exhaustive = false;
+                    continue;
+                },
+                "-j" => {
+                    json_output = true;
+                    continue;
+                },
+                _ => {
+                    print_usage = false;
+                    collect_files(dir, &mut files, &mut inodes);
+                },
+            }
         }
     }
 
@@ -178,12 +180,12 @@ fn main() {
     }
 
     // Get rid of all the single entries.
-    hmap.retain(|_, v| v.len() >= 2);
+    files.retain(|_, v| v.len() >= 2);
 
     let mut cluster = 1;
 
-    let mut json_list : Vec<FileEntry> = Vec::new();
-    for (key, val) in hmap {
+    let mut json : Vec<FileEntry> = Vec::new();
+    for (key, val) in files {
         let mut duplicates: HashMap<u64, Vec<String> > = HashMap::new();
         find_duplicates(&mut duplicates, &val, thorough);
 
@@ -195,12 +197,12 @@ fn main() {
                     for (_, v) in emap {
                         if v.len() >= 2 {
                             print_duplicates(&v, cluster, key, hash,
-                                             &mut json_list, json_output);
+                                             &mut json, json_output);
                             cluster += 1;
                         }
                     }
                 } else {
-                    print_duplicates(&vec, cluster, key, hash, &mut json_list,
+                    print_duplicates(&vec, cluster, key, hash, &mut json,
                                      json_output);
                     cluster += 1;
                 }
@@ -208,6 +210,6 @@ fn main() {
         }
     }
     if json_output {
-        println!("{}", serde_json::to_string_pretty(&json_list).unwrap());
+        println!("{}", serde_json::to_string_pretty(&json).unwrap());
     }
 }
