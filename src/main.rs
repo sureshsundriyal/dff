@@ -57,7 +57,7 @@ fn collect_files(
                 }
                 inodes.insert((inode, device));
                 match metadata.len() {
-                    0 => continue, //Ignore empty files.
+                    0 => continue, // Ignore empty files.
                     i => files
                         .entry(i)
                         .or_insert_with(Vec::new)
@@ -133,7 +133,7 @@ fn print_duplicates(
             hash
         );
         // for_each becomes stable v1.22.0 onwards. Should uncomment then.
-        //files.iter().for_each(|f| println!("{}", f.path));
+        // files.iter().for_each(|f| println!("{}", f.path));
         for file in files {
             println!("{}", file);
         }
