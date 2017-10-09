@@ -141,18 +141,18 @@ fn print_duplicates(
 fn exhaustive_search(content_map: &mut HashMap<Vec<u8>, Vec<String>>,
                      files: &Vec<String>)
 {
-    for file_entry in files {
-        if let Ok(mut file) = File::open(file_entry) {
+    for file_name in files {
+        if let Ok(mut file) = File::open(file_name) {
             let mut contents: Vec<u8> = Vec::new();
             if let Ok(_) = file.read_to_end(&mut contents) {
                 content_map.entry(contents)
                     .or_insert_with(Vec::new)
-                    .push(file_entry.to_string());
+                    .push(file_name.to_string());
             } else {
-                warn!("Failed to read {}", file_entry);
+                warn!("Failed to read {}", file_name);
             }
         } else {
-            warn!("Failed to open {}", file_entry);
+            warn!("Failed to open {}", file_name);
         }
     }
 }
