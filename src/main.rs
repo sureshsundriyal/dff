@@ -43,8 +43,8 @@ fn collect_files(
         .map(|x| x.unwrap().path())
         .collect::<Vec<PathBuf>>()
     {
-        if let (Some(path_str), Ok(metadata)) = (path.to_str(),
-                                                 path.symlink_metadata())
+        if let (Some(path_str), Ok(metadata)) =
+            (path.to_str(), path.symlink_metadata())
         {
             let ft = metadata.file_type();
             if ft.is_symlink() {
@@ -72,9 +72,11 @@ fn collect_files(
     }
 }
 
-fn find_duplicates(duplicates: &mut HashMap<u64, Vec<String>>,
-                   vec: &Vec<String>, thorough: bool)
-{
+fn find_duplicates(
+    duplicates: &mut HashMap<u64, Vec<String>>,
+    vec: &Vec<String>,
+    thorough: bool,
+) {
     for file_entry in vec {
         if let Ok(mut file) = File::open(file_entry) {
             let mut hash: u64 = 0;
@@ -138,14 +140,16 @@ fn print_duplicates(
     }
 }
 
-fn exhaustive_search(content_map: &mut HashMap<Vec<u8>, Vec<String>>,
-                     files: &Vec<String>)
-{
+fn exhaustive_search(
+    content_map: &mut HashMap<Vec<u8>, Vec<String>>,
+    files: &Vec<String>,
+) {
     for file_name in files {
         if let Ok(mut file) = File::open(file_name) {
             let mut contents: Vec<u8> = Vec::new();
             if let Ok(_) = file.read_to_end(&mut contents) {
-                content_map.entry(contents)
+                content_map
+                    .entry(contents)
                     .or_insert_with(Vec::new)
                     .push(file_name.to_string());
             } else {
@@ -217,7 +221,10 @@ fn main() {
         for (hash, vec) in duplicates {
             if vec.len() >= 2 {
                 if exhaustive {
-                    let mut content_map: HashMap<Vec<u8>, Vec<String>> = HashMap::new();
+                    let mut content_map: HashMap<
+                        Vec<u8>,
+                        Vec<String>,
+                    > = HashMap::new();
                     exhaustive_search(&mut content_map, &vec);
                     for (_, v) in content_map {
                         if v.len() >= 2 {
@@ -227,7 +234,7 @@ fn main() {
                                 key,
                                 hash,
                                 &mut json,
-                                json_output
+                                json_output,
                             );
                             cluster += 1;
                         }
@@ -239,7 +246,7 @@ fn main() {
                         key,
                         hash,
                         &mut json,
-                        json_output
+                        json_output,
                     );
                     cluster += 1;
                 }
