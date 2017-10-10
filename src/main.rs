@@ -26,7 +26,7 @@ struct FileEntry {
 }
 
 fn collect_files(
-    dir: &String,
+    dir: &str,
     files: &mut HashMap<u64, Vec<String>>,
     inodes: &mut BTreeSet<(u64, u64)>,
 ) {
@@ -64,7 +64,7 @@ fn collect_files(
                         .push(String::from(path_str)),
                 };
             } else if ft.is_dir() {
-                collect_files(&(String::from(path_str)), files, inodes);
+                collect_files(path_str, files, inodes);
             }
         } else {
             warn!("Failed to retrieve metadata for {}", path.to_str().unwrap());
