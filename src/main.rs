@@ -164,7 +164,8 @@ fn exhaustive_search(
 fn main() {
     env_logger::init().unwrap();
 
-    let binary_name = env::args()
+    let mut arg_iterator = env::args();
+    let binary_name = arg_iterator
         .next()
         .expect("Unable to figure out the binary name");
 
@@ -177,7 +178,7 @@ fn main() {
 
     {
         let mut inodes: BTreeSet<(u64, u64)> = BTreeSet::new();
-        for dir in env::args().skip(1) {
+        for dir in arg_iterator {
             match dir.as_ref() {
                 "-t" => {
                     thorough = true;
