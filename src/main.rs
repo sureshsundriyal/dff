@@ -164,9 +164,9 @@ fn exhaustive_search(
 fn main() {
     env_logger::init().unwrap();
 
-    let mut args: Vec<String> = env::args().collect();
-
-    let binary_name = args.remove(0);
+    let binary_name = env::args()
+        .next()
+        .expect("Unable to figure out the binary name");
 
     let mut files: HashMap<u64, Vec<String>> = HashMap::new();
 
@@ -177,7 +177,7 @@ fn main() {
 
     {
         let mut inodes: BTreeSet<(u64, u64)> = BTreeSet::new();
-        for dir in &args[..] {
+        for dir in env::args().skip(1) {
             match dir.as_ref() {
                 "-t" => {
                     thorough = true;
@@ -194,7 +194,7 @@ fn main() {
                 }
                 _ => {
                     print_usage = false;
-                    collect_files(dir, &mut files, &mut inodes);
+                    collect_files(&dir, &mut files, &mut inodes);
                 }
             }
         }
