@@ -1,4 +1,4 @@
-#+TITLE: dff -- duplicate file finder.
+#+TITLE: dff -- duplicate file finder
 
 [[https://travis-ci.org/sureshsundriyal/dff.svg?branch=master]]
 
