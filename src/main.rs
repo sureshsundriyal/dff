@@ -162,7 +162,7 @@ fn exhaustive_search(
 }
 
 fn main() {
-    env_logger::init().unwrap();
+    env_logger::init();
 
     let mut arg_iterator = env::args();
     let binary_name = arg_iterator
